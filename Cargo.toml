@@ -1,8 +1,19 @@
 [package]
 name = "zero2prod"
 version = "0.1.0"
-edition = "2018"
+edition = "2021"
+rust-version = "1.59"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+hyper = "0.14"
+
+[dependencies.axum]
+version = "0.4"
+
+[dependencies.tokio]
+version = "1"
+features = [
+    "rt-multi-thread", "macros"
+]
