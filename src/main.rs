@@ -1,15 +1,14 @@
-use axum::{routing::get, Router, Server};
-use std::net::SocketAddr;
+#![warn(clippy::pedantic)]
+#![allow(
+    clippy::unused_async,
+    clippy::missing_panics_doc,
+    clippy::missing_errors_doc
+)]
 
-async fn health_check() -> hyper::StatusCode {
-    hyper::StatusCode::OK
-}
+use std::net::TcpListener;
+use zero2prod::run;
 
 #[tokio::main]
 async fn main() -> hyper::Result<()> {
-    let app = Router::new().route("/health_check", get(health_check));
-
-    Server::bind(&SocketAddr::from(([127, 0, 0, 1], 8000)))
-        .serve(app.into_make_service())
-        .await
+    run(TcpListener::bind("127.0.0.1:8000").unwrap())?.await
 }
