@@ -5,10 +5,21 @@
     clippy::missing_errors_doc
 )]
 
+use sqlx::PgPool;
 use std::net::TcpListener;
-use zero2prod::run;
+use zero2prod::{config::get_config, startup::run};
 
 #[tokio::main]
 async fn main() -> hyper::Result<()> {
-    run(TcpListener::bind("127.0.0.1:8000").unwrap())?.await
+    let conf = get_config().expect("Cannot read config");
+
+    let addr = format!("127.0.0.1:{}", conf.port);
+
+    let pool = PgPool::connect(&conf.database.connection_string())
+        .await
+        .expect("Failed to connect to Postgres.");
+
+    let listener = TcpListener::bind(addr).expect("Unable to bind to port");
+
+    run(listener, pool)?.await
 }

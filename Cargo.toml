@@ -15,10 +15,14 @@ name = "zero2prod"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+axum = "0.4"
 hyper = "0.14"
+config = "0.12"
+uuid = { version = "0.8.1", features = ["v4"] }
 
-[dependencies.axum]
-version = "0.4"
+# Old version, waiting for sqlx 0.6
+# Using time because chrono has a segfault vulnerability
+time = "0.2"
 
 [dependencies.tokio]
 version = "1"
@@ -26,5 +30,25 @@ features = [
     "rt-multi-thread", "macros"
 ]
 
+[dependencies.serde]
+version = "1"
+features = [
+    "derive"
+]
+
+[dependencies.sqlx]
+version = "0.5"
+features = [
+    "runtime-tokio-rustls", "macros", "postgres",
+    "uuid", "time", "offline"
+]
+
 [dev-dependencies]
 reqwest = "0.11"
+
+
+[dev-dependencies.sqlx]
+version = "0.5"
+features = [
+    "migrate"
+]

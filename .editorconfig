@@ -19,3 +19,7 @@ tab_width = 2
 [{*.yml, *.yaml}]
 indent_size = 2
 tab_width = 2
+
+[*.json]
+indent_size = 2
+tab_width = 2
