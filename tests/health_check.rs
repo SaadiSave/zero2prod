@@ -1,12 +1,14 @@
 #![warn(clippy::pedantic)]
 
 use hyper::StatusCode;
+use once_cell::sync::Lazy;
 use reqwest::Client;
 use sqlx::{Connection, Executor, PgConnection, PgPool};
 use std::net::{SocketAddr, TcpListener};
-use once_cell::sync::Lazy;
-use zero2prod::config::{get_config, DbSettings};
-use zero2prod::telemetry::{get_subscriber, init_subscriber};
+use zero2prod::{
+    config::{get_config, DbSettings},
+    telemetry::{get_subscriber, init_subscriber},
+};
 
 static TRACING: Lazy<()> = Lazy::new(|| {
     let name = "test".to_string();
