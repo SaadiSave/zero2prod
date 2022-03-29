@@ -19,10 +19,18 @@ axum = "0.4"
 hyper = "0.14"
 config = "0.12"
 uuid = { version = "0.8.1", features = ["v4"] }
+tracing = "0.1"
+tracing-bunyan-formatter = "0.3"
+tracing-log = "0.1"
+once_cell = "1"
 
 # Old version, waiting for sqlx 0.6
 # Using time because chrono has a segfault vulnerability
 time = "0.2"
+
+[dependencies.tracing-subscriber]
+version = "0.3"
+features = ["registry", "env-filter"]
 
 [dependencies.tokio]
 version = "1"

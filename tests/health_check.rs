@@ -4,7 +4,22 @@ use hyper::StatusCode;
 use reqwest::Client;
 use sqlx::{Connection, Executor, PgConnection, PgPool};
 use std::net::{SocketAddr, TcpListener};
+use once_cell::sync::Lazy;
 use zero2prod::config::{get_config, DbSettings};
+use zero2prod::telemetry::{get_subscriber, init_subscriber};
+
+static TRACING: Lazy<()> = Lazy::new(|| {
+    let name = "test".to_string();
+    let level = "debug".to_string();
+
+    if std::env::var("TEST_LOG").is_ok() {
+        let sub = get_subscriber(name, level, std::io::stdout);
+        init_subscriber(sub);
+    } else {
+        let sub = get_subscriber(name, level, std::io::sink);
+        init_subscriber(sub);
+    }
+});
 
 struct TestApp {
     addr: SocketAddr,
@@ -32,6 +47,8 @@ async fn config_db(config: &DbSettings) -> PgPool {
 }
 
 async fn spawn_app() -> TestApp {
+    Lazy::force(&TRACING);
+
     let listener = TcpListener::bind("127.0.0.1:0").expect("Failed to bind to random port");
     let addr = listener.local_addr().unwrap();
 
