@@ -5,6 +5,7 @@
     clippy::missing_errors_doc
 )]
 
+use secrecy::ExposeSecret;
 use sqlx::PgPool;
 use std::net::TcpListener;
 use zero2prod::{
@@ -22,7 +23,7 @@ async fn main() -> hyper::Result<()> {
 
     let addr = format!("127.0.0.1:{}", conf.port);
 
-    let pool = PgPool::connect(&conf.database.connection_string())
+    let pool = PgPool::connect(conf.database.connection_string().expose_secret())
         .await
         .expect("Failed to connect to Postgres.");
 

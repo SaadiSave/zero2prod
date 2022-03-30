@@ -3,6 +3,7 @@
 use hyper::StatusCode;
 use once_cell::sync::Lazy;
 use reqwest::Client;
+use secrecy::ExposeSecret;
 use sqlx::{Connection, Executor, PgConnection, PgPool};
 use std::net::{SocketAddr, TcpListener};
 use zero2prod::{
@@ -29,7 +30,7 @@ struct TestApp {
 }
 
 async fn config_db(config: &DbSettings) -> PgPool {
-    let mut conn = PgConnection::connect(&config.connection_string_without_db())
+    let mut conn = PgConnection::connect(config.connection_string_without_db().expose_secret())
         .await
         .expect("Failed to connect to database");
 
@@ -37,7 +38,7 @@ async fn config_db(config: &DbSettings) -> PgPool {
         .await
         .expect("Unable to create database");
 
-    let pool = PgPool::connect(&config.connection_string())
+    let pool = PgPool::connect(config.connection_string().expose_secret())
         .await
         .expect("Failed to connect to database");
     sqlx::migrate!("./migrations")
