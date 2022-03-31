@@ -13,6 +13,7 @@ use tower_http::{
     trace::{DefaultMakeSpan, DefaultOnResponse, TraceLayer},
     ServiceBuilderExt,
 };
+use tracing::Level;
 use uuid::Uuid;
 
 pub type App = Server<AddrIncoming, IntoMakeService<Router>>;
@@ -40,9 +41,14 @@ pub fn run(listener: TcpListener, pool: PgPool) -> hyper::Result<App> {
                 .set_x_request_id(MakeRequestUuid)
                 .layer(
                     TraceLayer::new_for_http()
-                        .make_span_with(DefaultMakeSpan::new().include_headers(true))
+                        .make_span_with(
+                            DefaultMakeSpan::new()
+                                .include_headers(true)
+                                .level(Level::INFO),
+                        )
                         .on_response(DefaultOnResponse::new().include_headers(true)),
-                ),
+                )
+                .propagate_x_request_id(),
         );
 
     Ok(Server::from_tcp(listener)?.serve(app.into_make_service()))
