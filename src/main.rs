@@ -7,7 +7,7 @@
 
 use secrecy::ExposeSecret;
 use sqlx::PgPool;
-use std::net::TcpListener;
+use tokio::net::TcpListener;
 use zero2prod::{
     config::get_config,
     startup::run,
@@ -15,7 +15,7 @@ use zero2prod::{
 };
 
 #[tokio::main]
-async fn main() -> hyper::Result<()> {
+async fn main() {
     let sub = get_subscriber("zero2prod".into(), "info".into(), std::io::stdout);
     init_subscriber(sub);
 
@@ -27,7 +27,12 @@ async fn main() -> hyper::Result<()> {
         .await
         .expect("Failed to connect to Postgres.");
 
-    let listener = TcpListener::bind(addr).expect("Unable to bind to port");
+    let listener = TcpListener::bind(&addr)
+        .await
+        .expect("Unable to bind to port");
 
-    run(listener, pool)?.await
+    run(listener, pool)
+        .unwrap_or_else(|e| panic!("Application failed to start: {e}"))
+        .await
+        .unwrap()
 }
