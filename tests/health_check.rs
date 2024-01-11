@@ -1,11 +1,12 @@
 #![warn(clippy::pedantic)]
 
-use hyper::StatusCode;
+use std::future::IntoFuture;
 use once_cell::sync::Lazy;
 use reqwest::Client;
 use secrecy::ExposeSecret;
 use sqlx::{Connection, Executor, PgConnection, PgPool};
-use std::net::{SocketAddr, TcpListener};
+use tokio::net::TcpListener;
+use std::net::SocketAddr;
 use zero2prod::{
     config::{get_config, DbSettings},
     telemetry::{get_subscriber, init_subscriber},
@@ -52,7 +53,9 @@ async fn config_db(config: &DbSettings) -> PgPool {
 async fn spawn_app() -> TestApp {
     Lazy::force(&TRACING);
 
-    let listener = TcpListener::bind("127.0.0.1:0").expect("Failed to bind to random port");
+    let listener = TcpListener::bind("127.0.0.1:0")
+        .await
+        .expect("Failed to bind to random port");
     let addr = listener.local_addr().unwrap();
 
     let mut conf = get_config().expect("Failed to read config");
@@ -62,7 +65,7 @@ async fn spawn_app() -> TestApp {
     let server =
         zero2prod::startup::run(listener, pool.clone()).expect("Failed to bind to address");
 
-    tokio::spawn(server);
+    tokio::spawn(server.into_future());
 
     TestApp { addr, pool }
 }
@@ -92,7 +95,7 @@ async fn subscribe_returns_200_for_valid_data() {
     let resp = client
         .post(format!("http://{addr}/subscriptions"))
         .header(
-            hyper::header::CONTENT_TYPE,
+            reqwest::header::CONTENT_TYPE,
             "application/x-www-form-urlencoded",
         )
         .body(body)
@@ -100,7 +103,7 @@ async fn subscribe_returns_200_for_valid_data() {
         .await
         .expect("Request failed");
 
-    assert_eq!(resp.status(), StatusCode::OK);
+    assert_eq!(resp.status(), reqwest::StatusCode::OK);
 
     let saved = sqlx::query!("SELECT email, name FROM subscriptions")
         .fetch_one(&pool)
@@ -127,7 +130,7 @@ async fn subscribe_returns_422_for_invalid_data() {
         let resp = client
             .post(format!("http://{addr}/subscriptions"))
             .header(
-                hyper::header::CONTENT_TYPE,
+                reqwest::header::CONTENT_TYPE,
                 "application/x-www-form-urlencoded",
             )
             .body(invalid_body)
@@ -137,7 +140,7 @@ async fn subscribe_returns_422_for_invalid_data() {
 
         assert_eq!(
             resp.status(),
-            StatusCode::UNPROCESSABLE_ENTITY, // Axum defaults to 422 instead of 400
+            reqwest::StatusCode::UNPROCESSABLE_ENTITY, // Axum defaults to 422 instead of 400
             "The API did not fail with 422 Unprocessable Entity when the payload was {msg}."
         );
     }

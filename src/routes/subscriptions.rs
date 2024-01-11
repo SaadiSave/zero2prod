@@ -1,7 +1,7 @@
 use axum::extract::{Extension, Form};
+use chrono::Utc;
 use hyper::StatusCode;
 use sqlx::PgPool;
-use time::OffsetDateTime;
 use uuid::Uuid;
 
 #[derive(serde::Deserialize)]
@@ -42,7 +42,7 @@ async fn insert_subscriber(pool: &PgPool, form: &FormData) -> Result<(), sqlx::E
         Uuid::new_v4(),
         form.email,
         form.name,
-        OffsetDateTime::now_utc()
+        Utc::now()
     )
     .execute(pool)
     .await

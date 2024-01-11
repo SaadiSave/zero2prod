@@ -1,12 +1,6 @@
-use axum::{
-    extract::Extension,
-    http::Request,
-    routing::{get, post, IntoMakeService},
-    Router, Server,
-};
-use hyper::server::conn::AddrIncoming;
+use axum::{extract::Extension, http::Request, routing::{get, post, IntoMakeService}, Router, serve::Serve, serve};
 use sqlx::PgPool;
-use std::net::TcpListener;
+use tokio::net::TcpListener;
 use tower::ServiceBuilder;
 use tower_http::{
     request_id::{MakeRequestId, RequestId},
@@ -16,7 +10,7 @@ use tower_http::{
 use tracing::Level;
 use uuid::Uuid;
 
-pub type App = Server<AddrIncoming, IntoMakeService<Router>>;
+pub type App = Serve<IntoMakeService<Router>, Router>;
 
 // from https://docs.rs/tower-http/0.2.5/tower_http/request_id/index.html#using-uuids
 #[derive(Clone)]
@@ -36,7 +30,6 @@ pub fn run(listener: TcpListener, pool: PgPool) -> hyper::Result<App> {
         .route("/subscriptions", post(crate::routes::subscribe))
         .layer(Extension(pool))
         .layer(
-            // from https://docs.rs/tower-http/0.2.5/tower_http/request_id/index.html#using-trace
             ServiceBuilder::new()
                 .set_x_request_id(MakeRequestUuid)
                 .layer(
@@ -51,5 +44,5 @@ pub fn run(listener: TcpListener, pool: PgPool) -> hyper::Result<App> {
                 .propagate_x_request_id(),
         );
 
-    Ok(Server::from_tcp(listener)?.serve(app.into_make_service()))
+    Ok(serve(listener, app.into_make_service()))
 }
